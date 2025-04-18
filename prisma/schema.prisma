@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model FoodEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  foodName    String
+  calories    Int
+  protein     Int
+  carbs       Int
+  fats        Int
+  createdAt   DateTime @default(now())
+  imageUrl    String?
+
+  @@index([userId])
+}

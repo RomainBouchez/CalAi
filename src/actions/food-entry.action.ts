@@ -1,21 +1,26 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 
+// Simplified version without authentication
 export async function saveFoodEntry(analysis: any) {
-    const { userId } = await auth();
+    try {
+        // Define a fixed userId for all entries as we're not using authentication
+        const userId = "anonymous-user";
 
-    if (!userId) throw new Error("Utilisateur non authentifié");
-
-    return prisma.foodEntry.create({
-        data: {
-            userId,
-            foodName: analysis.food_name,
-            calories: analysis.calories,
-            protein: analysis.protein,
-            carbs: analysis.carbs,
-            fats: analysis.fats
-        }
-    });
+        return prisma.foodEntry.create({
+            data: {
+                userId,
+                foodName: analysis.food_name,
+                calories: analysis.calories,
+                protein: analysis.protein,
+                carbs: analysis.carbs,
+                fats: analysis.fats
+            }
+        });
+    } catch (error) {
+        console.error("Error saving food entry:", error);
+        // Return a simple error object that can be serialized
+        return { error: "Failed to save food entry" };
+    }
 }

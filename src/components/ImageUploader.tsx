@@ -2,17 +2,61 @@
 
 import { useRef, useState } from 'react'
 import { Button } from './ui/button'
+import { Camera, Upload, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { NutritionCard } from './NutritionCard'
 import { saveFoodEntry } from '@/actions/food-entry.action'
+
+// Version simplifiée sans Sonner pour éviter l'erreur de build
+const toast = {
+    loading: (message: string) => console.log(message),
+    error: (message: string) => console.error(message),
+    success: (message: string) => console.log(message),
+    dismiss: () => {}
+}
 
 export function ImageUploader() {
     const fileRef = useRef<HTMLInputElement>(null)
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState<any>(null)
     const [error, setError] = useState<string | null>(null)
+    const [dragActive, setDragActive] = useState(false)
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
+
+        processUpload(file)
+    }
+
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(false)
+
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const file = e.dataTransfer.files[0]
+            processUpload(file)
+        }
+    }
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(true)
+    }
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(false)
+    }
+
+    const processUpload = async (file: File) => {
+        if (!file.type.startsWith('image/')) {
+            alert('Veuillez sélectionner une image')
+            return
+        }
 
         try {
             setLoading(true)
@@ -21,7 +65,10 @@ export function ImageUploader() {
             // Convert file to base64
             const base64 = await fileToBase64(file)
 
-            // Send data in the exact same format as your working Expo app
+            // Display a console message instead of toast
+            console.log('Analyse en cours...')
+
+            // Send data to the analyze endpoint
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {
@@ -45,25 +92,40 @@ export function ImageUploader() {
 
             // Format the result to match expected structure
             if (data.success && data.data) {
-                const foodAnalysis = data.data.foodAnalysis;
+                const foodAnalysis = data.data.foodAnalysis
+
+                // Convert to our simple schema format
+                const formattedAnalysis = {
+                    food_name: foodAnalysis.identifiedFood,
+                    estimated_weight_grams: parseFloat(foodAnalysis.portionSize),
+                    calories: parseFloat(foodAnalysis.nutritionFactsPerPortion.calories),
+                    protein: parseFloat(foodAnalysis.nutritionFactsPerPortion.protein),
+                    carbs: parseFloat(foodAnalysis.nutritionFactsPerPortion.carbs),
+                    fats: parseFloat(foodAnalysis.nutritionFactsPerPortion.fat),
+                    vitamins: foodAnalysis.additionalNotes || []
+                }
 
                 // Create a local object URL for the image preview
-                const imageUrl = URL.createObjectURL(file);
-                foodAnalysis.image = imageUrl;
+                const imageUrl = URL.createObjectURL(file)
+                formattedAnalysis.image = imageUrl
 
-                setResult(foodAnalysis);
+                setResult(formattedAnalysis)
+                console.log('Analyse terminée !')
 
                 // Save the food entry if the analysis was successful
                 try {
-                    await saveFoodEntry(foodAnalysis);
+                    await saveFoodEntry(formattedAnalysis)
                 } catch (saveError) {
-                    console.error('Error saving food entry:', saveError);
+                    console.error('Error saving food entry:', saveError)
                     // Continue anyway - don't show this error to user
                 }
+            } else {
+                throw new Error('Analyse échouée')
             }
         } catch (error) {
             console.error('Error analyzing food image:', error)
-            setError(error instanceof Error ? error.message : 'An unknown error occurred')
+            setError(error instanceof Error ? error.message : 'Une erreur est survenue')
+            alert('Impossible d\'analyser l\'image')
         } finally {
             setLoading(false)
         }
@@ -84,94 +146,115 @@ export function ImageUploader() {
         })
     }
 
+    const resetAnalysis = () => {
+        setResult(null)
+        setError(null)
+    }
+
     return (
-        <div className="space-y-4">
-            <input
-                type="file"
-                ref={fileRef}
-                accept="image/*"
-                hidden
-                onChange={handleUpload}
-            />
-            <Button
-                onClick={() => fileRef.current?.click()}
-                disabled={loading}
-                className="w-full"
-            >
-                {loading ? 'Analysing...' : 'Upload Food Image'}
-            </Button>
+        <AnimatePresence mode="wait">
+            {!result ? (
+                <motion.div
+                    key="uploader"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="max-w-xl mx-auto"
+                >
+                    <input
+                        type="file"
+                        ref={fileRef}
+                        accept="image/*"
+                        hidden
+                        onChange={handleUpload}
+                    />
 
-            {error && (
-                <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
-                    <p className="font-medium">Error:</p>
-                    <p>{error}</p>
-                </div>
-            )}
-
-            {result && (
-                <div className="mt-6 space-y-4">
-                    <div className="w-full h-64 relative rounded-lg overflow-hidden">
-                        <img
-                            src={result.image}
-                            alt={result.identifiedFood}
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-
-                    <div className="bg-white p-4 rounded-lg shadow">
-                        <h3 className="text-lg font-bold mb-2">{result.identifiedFood}</h3>
-
-                        <div className="space-y-4">
-                            <div>
-                                <h4 className="font-medium text-gray-700">Portion Information</h4>
-                                <div className="grid grid-cols-2 gap-2 mt-1">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Portion Size:</p>
-                                        <p className="font-medium">{result.portionSize}g</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Serving Size:</p>
-                                        <p className="font-medium">{result.recognizedServingSize}g</p>
-                                    </div>
-                                </div>
+                    <div
+                        className={`relative border-2 border-dashed rounded-xl p-10 transition-colors
+                            ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/20 hover:border-primary/50'}`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                    >
+                        <div className="flex flex-col items-center justify-center gap-4 text-center">
+                            <div className="p-6 bg-primary/10 rounded-full">
+                                <Camera className="h-10 w-10 text-primary" />
                             </div>
 
                             <div>
-                                <h4 className="font-medium text-gray-700">Nutrition Facts (per portion)</h4>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-1">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Calories:</p>
-                                        <p className="font-medium">{result.nutritionFactsPerPortion.calories}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Protein:</p>
-                                        <p className="font-medium">{result.nutritionFactsPerPortion.protein}g</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Carbs:</p>
-                                        <p className="font-medium">{result.nutritionFactsPerPortion.carbs}g</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Fat:</p>
-                                        <p className="font-medium">{result.nutritionFactsPerPortion.fat}g</p>
-                                    </div>
-                                </div>
+                                <h3 className="text-lg font-semibold">Analysez votre repas</h3>
+                                <p className="text-muted-foreground mt-1">
+                                    Prenez une photo ou glissez-déposez une image de votre aliment
+                                </p>
                             </div>
 
-                            {result.additionalNotes && result.additionalNotes.length > 0 && (
-                                <div>
-                                    <h4 className="font-medium text-gray-700">Additional Notes</h4>
-                                    <ul className="list-disc pl-5 mt-1 space-y-1">
-                                        {result.additionalNotes.map((note: string, index: number) => (
-                                            <li key={index} className="text-gray-600">{note}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
+                            <div className="flex gap-4 mt-4">
+                                <Button
+                                    onClick={() => fileRef.current?.click()}
+                                    disabled={loading}
+                                    variant="outline"
+                                    className="gap-2"
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    Choisir une image
+                                </Button>
+
+                                <Button
+                                    onClick={() => fileRef.current?.click()}
+                                    disabled={loading}
+                                    className="gap-2"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Analyse en cours...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Camera className="h-4 w-4" />
+                                            Prendre une photo
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-4 p-4 bg-destructive/10 text-destructive rounded-lg"
+                        >
+                            <p className="font-medium">Erreur :</p>
+                            <p>{error}</p>
+                        </motion.div>
+                    )}
+                </motion.div>
+            ) : (
+                <motion.div
+                    key="results"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="max-w-xl mx-auto"
+                >
+                    <NutritionCard analysis={result} />
+
+                    <div className="flex justify-center mt-6">
+                        <Button
+                            variant="outline"
+                            onClick={resetAnalysis}
+                            className="gap-2"
+                        >
+                            <Camera className="h-4 w-4" />
+                            Analyser un autre aliment
+                        </Button>
+                    </div>
+                </motion.div>
             )}
-        </div>
+        </AnimatePresence>
     )
 }
