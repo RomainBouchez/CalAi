@@ -1,0 +1,26 @@
+{
+  "name": "AiCal - AI Calorie Calculator",
+  "short_name": "AiCal",
+  "description": "Analyse nutritionnelle intelligente avec IA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/Logo_light.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/Logo_Black.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["health", "lifestyle", "food"],
+  "lang": "fr"
+}

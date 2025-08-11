@@ -1,0 +1,119 @@
+.dock-outer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  margin: 0 auto;
+  max-width: fit-content;
+}
+
+.dock-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 28px;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: visible;
+}
+
+.dock-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dock-item:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.dock-item:active {
+  transform: scale(0.95) translateY(0);
+}
+
+.dock-item.active {
+  background: rgba(59, 130, 246, 0.8);
+  border-color: rgba(59, 130, 246, 0.9);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.dock-item.active .dock-icon {
+  color: white;
+}
+
+.dock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(55, 65, 81, 0.8);
+  transition: color 0.2s ease;
+}
+
+.dock-item:hover .dock-icon {
+  color: rgba(55, 65, 81, 1);
+}
+
+.dock-label-text {
+  position: absolute;
+  left: -9999px;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .dock-panel {
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  
+  .dock-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .dock-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .dock-item.active {
+    background: rgba(59, 130, 246, 0.6);
+    border-color: rgba(59, 130, 246, 0.8);
+  }
+  
+  .dock-icon {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .dock-item:hover .dock-icon {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .dock-item.active .dock-icon {
+    color: white;
+  }
+}

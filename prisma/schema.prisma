@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String?          @unique
+  name            String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  foodEntries     FoodEntry[]
+  nutritionGoals  NutritionGoals?
+  
+  @@map("users")
+}
+
+model FoodEntry {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodName        String
+  calories        Float
+  protein         Float
+  carbs           Float
+  fats            Float
+  fiber           Float?
+  sugar           Float?
+  sodium          Float?
+  cholesterol     Float?
+  portionSize     Float?   // in grams
+  mealType        String?  // breakfast, lunch, dinner, snack
+  imageUrl        String?
+  notes           String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([mealType])
+  @@map("food_entries")
+}
+
+model NutritionGoals {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calories  Float    @default(2000)
+  protein   Float    @default(150)
+  carbs     Float    @default(250)
+  fats      Float    @default(65)
+  fiber     Float?   @default(25)
+  sodium    Float?   @default(2300)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("nutrition_goals")
+}
