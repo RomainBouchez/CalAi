@@ -8,9 +8,13 @@ import { MealsProvider } from '@/context/MealsContext'
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Dock, { type DockItemData } from '@/components/ui/Dock'
-import { Camera, BookOpen, Home as HomeIcon } from 'lucide-react'
+import { Camera, BookOpen, Home as HomeIcon, User, LogIn, UserPlus } from 'lucide-react'
+import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
+    const { isSignedIn, user } = useUser()
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState<string>("home");
     const [analysisMethod, setAnalysisMethod] = useState<"photo" | "text">("photo");
 
@@ -32,7 +36,29 @@ export default function Home() {
             label: "Food Journal",
             onClick: () => setActiveTab("journal"),
             className: activeTab === "journal" ? "active" : ""
-        }
+        },
+        // Ajouter les boutons d'authentification selon l'état de connexion
+        ...(!isSignedIn ? [
+            {
+                icon: <LogIn className="w-6 h-6" />,
+                label: "Sign In",
+                onClick: () => router.push('/auth/signin'),
+                className: ""
+            },
+            {
+                icon: <UserPlus className="w-6 h-6" />,
+                label: "Sign Up", 
+                onClick: () => router.push('/auth/signup'),
+                className: ""
+            }
+        ] : [
+            {
+                icon: <User className="w-6 h-6" />,
+                label: "Compte",
+                onClick: () => router.push('/profile'),
+                className: ""
+            }
+        ])
     ];
 
     return (

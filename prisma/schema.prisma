@@ -8,55 +8,58 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  email           String?          @unique
-  name            String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  foodEntries     FoodEntry[]
-  nutritionGoals  NutritionGoals?
-  
+  id              String          @id
+  email           String          @unique
+  first_name      String?
+  last_name       String?
+  image_url       String?
+  created_at      DateTime?       @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?       @default(now()) @db.Timestamptz(6)
+  food_entries    FoodEntry[]
+  nutrition_goals NutritionGoal[]
+
+  @@index([email], map: "idx_users_email")
   @@map("users")
 }
 
 model FoodEntry {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  foodName        String
-  calories        Float
-  protein         Float
-  carbs           Float
-  fats            Float
-  fiber           Float?
-  sugar           Float?
-  sodium          Float?
-  cholesterol     Float?
-  portionSize     Float?   // in grams
-  mealType        String?  // breakfast, lunch, dinner, snack
-  imageUrl        String?
-  notes           String[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                     String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id                String
+  food_name              String
+  calories               Int
+  protein                Decimal   @db.Decimal(8, 2)
+  carbs                  Decimal   @db.Decimal(8, 2)
+  fats                   Decimal   @db.Decimal(8, 2)
+  estimated_weight_grams Int?
+  meal_type              String?
+  image_url              String?
+  vitamins               String[]
+  created_at             DateTime? @default(now()) @db.Timestamptz(6)
+  date_consumed          DateTime  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  user                   User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([userId])
-  @@index([createdAt])
-  @@index([mealType])
+  @@index([created_at], map: "idx_food_entries_created_at")
+  @@index([date_consumed], map: "idx_food_entries_date_consumed")
+  @@index([meal_type], map: "idx_food_entries_meal_type")
+  @@index([user_id, date_consumed], map: "idx_food_entries_user_date")
+  @@index([user_id], map: "idx_food_entries_user_id")
   @@map("food_entries")
 }
 
-model NutritionGoals {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  calories  Float    @default(2000)
-  protein   Float    @default(150)
-  carbs     Float    @default(250)
-  fats      Float    @default(65)
-  fiber     Float?   @default(25)
-  sodium    Float?   @default(2300)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model NutritionGoal {
+  id         String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id    String
+  goal_type  String
+  calories   Int       @default(2000)
+  protein    Decimal   @default(150) @db.Decimal(8, 2)
+  carbs      Decimal   @default(250) @db.Decimal(8, 2)
+  fats       Decimal   @default(65) @db.Decimal(8, 2)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@unique([user_id, goal_type])
+  @@index([goal_type], map: "idx_nutrition_goals_goal_type")
+  @@index([user_id], map: "idx_nutrition_goals_user_id")
   @@map("nutrition_goals")
 }

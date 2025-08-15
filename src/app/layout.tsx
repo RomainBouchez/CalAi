@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Toaster } from 'sonner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ClerkProvider } from '@clerk/nextjs';
 
 export const metadata: Metadata = {
     title: 'AiCal - AI Calorie Calculator',
@@ -30,6 +31,7 @@ export default function RootLayout({
             <title>AiCal - AI Calorie Calculator</title>
         </head>
         <body className="min-h-screen bg-background antialiased">
+        <ClerkProvider>
         <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
             <div className="flex h-16 items-center justify-between px-4 max-w-full">
                 <div className="flex items-center gap-2 no-select">
@@ -116,6 +118,7 @@ export default function RootLayout({
                 </div>
             </div>
         </footer>
+        </ClerkProvider>
         </body>
         </html>
     );
