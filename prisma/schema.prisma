@@ -17,6 +17,9 @@ model User {
   updated_at      DateTime?       @default(now()) @db.Timestamptz(6)
   food_entries    FoodEntry[]
   nutrition_goals NutritionGoal[]
+  inventory       UserInventory[]
+  recipes         Recipe[]
+  meal_plans      MealPlan[]
 
   @@index([email], map: "idx_users_email")
   @@map("users")
@@ -62,4 +65,90 @@ model NutritionGoal {
   @@index([goal_type], map: "idx_nutrition_goals_goal_type")
   @@index([user_id], map: "idx_nutrition_goals_user_id")
   @@map("nutrition_goals")
+}
+
+model UserInventory {
+  id               String             @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id          String
+  name             String
+  category         String?
+  is_staple        Boolean            @default(false)
+  quantity         String?
+  unit             String?
+  expiry_date      DateTime?          @db.Date
+  image_url        String?
+  created_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  user             User               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  recipe_ingredients RecipeIngredient[]
+
+  @@index([user_id], map: "idx_user_inventory_user_id")
+  @@index([category], map: "idx_user_inventory_category")
+  @@index([is_staple], map: "idx_user_inventory_staple")
+  @@map("user_inventory")
+}
+
+model Recipe {
+  id              String             @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id         String
+  name            String
+  description     String?
+  instructions    String[]
+  prep_time       Int?
+  cook_time       Int?
+  servings        Int               @default(1)
+  calories        Int
+  protein         Decimal           @db.Decimal(8, 2)
+  carbs           Decimal           @db.Decimal(8, 2)
+  fats            Decimal           @db.Decimal(8, 2)
+  fiber           Decimal?          @db.Decimal(8, 2)
+  sodium          Decimal?          @db.Decimal(8, 2)
+  sugar           Decimal?          @db.Decimal(8, 2)
+  image_url       String?
+  is_ai_generated Boolean           @default(true)
+  created_at      DateTime?         @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamptz(6)
+  user            User              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ingredients     RecipeIngredient[]
+  meal_plans      MealPlan[]
+
+  @@index([user_id], map: "idx_recipes_user_id")
+  @@index([is_ai_generated], map: "idx_recipes_ai_generated")
+  @@index([calories], map: "idx_recipes_calories")
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id           String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  recipe_id    String
+  inventory_id String?
+  name         String
+  quantity     String
+  unit         String?
+  notes        String?
+  recipe       Recipe        @relation(fields: [recipe_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  inventory    UserInventory? @relation(fields: [inventory_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([recipe_id], map: "idx_recipe_ingredients_recipe_id")
+  @@index([inventory_id], map: "idx_recipe_ingredients_inventory_id")
+  @@map("recipe_ingredients")
+}
+
+model MealPlan {
+  id          String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id     String
+  recipe_id   String
+  planned_date DateTime @db.Date
+  meal_type   String
+  servings    Int       @default(1)
+  status      String    @default("planned")
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  recipe      Recipe    @relation(fields: [recipe_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_meal_plans_user_id")
+  @@index([planned_date], map: "idx_meal_plans_date")
+  @@index([meal_type], map: "idx_meal_plans_meal_type")
+  @@index([status], map: "idx_meal_plans_status")
+  @@map("meal_plans")
 }

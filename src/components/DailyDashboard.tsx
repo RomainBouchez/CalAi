@@ -9,6 +9,7 @@ import { useMeals, MealType, MealEntry } from "@/context/MealsContext";
 import { Settings, Trash2, ChevronRight, ChevronLeft, Edit2, Save, X, Plus } from "lucide-react";
 import { NutritionGoalsDialog } from "./NutritionGoalsDialog";
 import { QuickAddFood } from "./QuickAddFood";
+import CulinaryAssistant from "./CulinaryAssistant";
 import Image from "next/image";
 
 const mealTypeIcons: Record<MealType, string> = {
@@ -45,6 +46,7 @@ export function DailyDashboard() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [editingMealId, setEditingMealId] = useState<string | null>(null);
     const [editWeight, setEditWeight] = useState<number>(0);
+    const [showCulinaryAssistant, setShowCulinaryAssistant] = useState(false);
 
     const {
         getDailyMeals,
@@ -232,6 +234,69 @@ export function DailyDashboard() {
                     </div>
                 </div>
             </Card>
+
+            {/* Culinary Assistant Section */}
+            {!showCulinaryAssistant ? (
+                <Card className="p-6 bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
+                    <div className="text-center">
+                        <div className="text-4xl mb-3">🤖👨‍🍳</div>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                            Assistant Culinaire Intelligent
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                            Vous ne savez pas quoi manger ? Laissez l'IA analyser vos ingrédients disponibles et générer la recette parfaite pour compléter vos objectifs nutritionnels !
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-sm">
+                            <div className="flex items-center gap-2 justify-center">
+                                <span className="text-green-600">📱</span>
+                                <span>Scannez votre frigo</span>
+                            </div>
+                            <div className="flex items-center gap-2 justify-center">
+                                <span className="text-blue-600">🧮</span>
+                                <span>Calculs nutritionnels précis</span>
+                            </div>
+                            <div className="flex items-center gap-2 justify-center">
+                                <span className="text-purple-600">📖</span>
+                                <span>Recettes personnalisées</span>
+                            </div>
+                        </div>
+                        <Button 
+                            onClick={() => setShowCulinaryAssistant(true)}
+                            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-8 py-3 rounded-lg font-semibold"
+                        >
+                            🚀 Découvrir l'Assistant Culinaire
+                        </Button>
+                        <div className="mt-3 text-xs text-gray-500">
+                            Calories restantes: {Math.max(0, dailyGoals.calories - dailyTotals.calories)} kcal • 
+                            Protéines: {Math.max(0, dailyGoals.protein - dailyTotals.protein)}g • 
+                            Disponible 24h/24
+                        </div>
+                    </div>
+                </Card>
+            ) : (
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-2xl font-bold flex items-center gap-2">
+                            🤖👨‍🍳 Assistant Culinaire
+                        </h2>
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setShowCulinaryAssistant(false)}
+                            className="text-sm"
+                        >
+                            Retour au journal
+                        </Button>
+                    </div>
+                    <CulinaryAssistant
+                        userId="user-123" // TODO: Get from auth context
+                        currentCalories={dailyTotals.calories}
+                        currentProtein={dailyTotals.protein}
+                        currentCarbs={dailyTotals.carbs}
+                        currentFats={dailyTotals.fats}
+                        dailyGoals={dailyGoals}
+                    />
+                </div>
+            )}
 
             <div className="space-y-6">
                 {(["breakfast", "lunch", "dinner", "snack"] as MealType[]).map(mealType => {

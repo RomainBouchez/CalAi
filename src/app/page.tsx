@@ -4,19 +4,25 @@ import { ImageUploader } from '@/components/ImageUploader'
 import { HomePage } from '@/components/HomePage'
 import { DailyDashboard } from '@/components/DailyDashboard'
 import { AiFoodChat } from '@/components/AiFoodChat'
+import ImprovedCulinaryAssistant from '@/components/ImprovedCulinaryAssistant'
 import { MealsProvider } from '@/context/MealsContext'
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Dock, { type DockItemData } from '@/components/ui/Dock'
-import { Camera, BookOpen, Home as HomeIcon, User, LogIn, UserPlus } from 'lucide-react'
+import { Camera, BookOpen, Home as HomeIcon, User, LogIn, UserPlus, ChefHat } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
+import { useMeals } from '@/context/MealsContext'
 
-export default function Home() {
+function HomeContent() {
     const { isSignedIn, user } = useUser()
     const router = useRouter()
+    const { getDailyTotals, dailyGoals } = useMeals()
     const [activeTab, setActiveTab] = useState<string>("home");
     const [analysisMethod, setAnalysisMethod] = useState<"photo" | "text">("photo");
+    
+    // Get current nutritional values for the assistant
+    const dailyTotals = getDailyTotals(new Date());
 
     const dockItems: DockItemData[] = [
         {
@@ -36,6 +42,12 @@ export default function Home() {
             label: "Food Journal",
             onClick: () => setActiveTab("journal"),
             className: activeTab === "journal" ? "active" : ""
+        },
+        {
+            icon: <ChefHat className="w-6 h-6" />,
+            label: "AI Chef Assistant",
+            onClick: () => setActiveTab("assistant"),
+            className: `chef-assistant ${activeTab === "assistant" ? "active" : ""}`
         },
         // Ajouter les boutons d'authentification selon l'état de connexion
         ...(!isSignedIn ? [
@@ -62,8 +74,7 @@ export default function Home() {
     ];
 
     return (
-        <MealsProvider>
-            <div className="flex flex-col min-h-[calc(100vh-4rem)] pb-12">
+        <div className="flex flex-col min-h-[calc(100vh-4rem)] pb-12">
                 <div className="w-full pb-24">
                     {/* Home Page */}
                     {activeTab === "home" && (
@@ -126,6 +137,53 @@ export default function Home() {
                             <DailyDashboard />
                         </div>
                     )}
+
+                    {/* AI Chef Assistant Page */}
+                    {activeTab === "assistant" && (
+                        <div className="max-w-5xl mx-auto w-full px-4 mt-8">
+                            {isSignedIn ? (
+                                <>
+                                    <div className="text-center mb-8">
+                                        <h1 className="text-3xl font-bold tracking-tight flex items-center justify-center gap-3">
+                                            <ChefHat className="w-8 h-8 text-orange-500" />
+                                            Assistant Culinaire Intelligent
+                                        </h1>
+                                        <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+                                            Découvrez quoi cuisiner avec vos ingrédients disponibles. 
+                                            L'IA analyse votre frigo et génère des recettes parfaites pour vos objectifs nutritionnels.
+                                        </p>
+                                    </div>
+                                    <ImprovedCulinaryAssistant
+                                        userId={user?.id || "anonymous"}
+                                    />
+                                </>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <ChefHat className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                                        Assistant Culinaire Intelligent
+                                    </h3>
+                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                        Connectez-vous pour accéder à votre assistant personnel qui vous aide à cuisiner avec vos ingrédients disponibles.
+                                    </p>
+                                    <div className="flex gap-4 justify-center">
+                                        <button
+                                            onClick={() => router.push('/auth/signin')}
+                                            className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium"
+                                        >
+                                            Se connecter
+                                        </button>
+                                        <button
+                                            onClick={() => router.push('/auth/signup')}
+                                            className="px-6 py-3 border border-orange-500 text-orange-500 rounded-lg hover:bg-orange-50 font-medium"
+                                        >
+                                            Créer un compte
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
                 
                 {/* Floating Dock Navigation */}
@@ -139,6 +197,13 @@ export default function Home() {
                     />
                 </div>
             </div>
+    )
+}
+
+export default function Home() {
+    return (
+        <MealsProvider>
+            <HomeContent />
         </MealsProvider>
     )
 }

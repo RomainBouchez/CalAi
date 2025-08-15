@@ -78,6 +78,7 @@ const QuickAddFoodContent = ({ mealType, onClose, onScannerClick }: Omit<QuickAd
     const [searchResults, setSearchResults] = useState<QuickFoodItem[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
+    const [translationInfo, setTranslationInfo] = useState<{ original: string; translated: string } | null>(null);
 
     // Reset function to clear all state
     const resetState = () => {
@@ -95,6 +96,7 @@ const QuickAddFoodContent = ({ mealType, onClose, onScannerClick }: Omit<QuickAd
         setSearchResults([]);
         setIsSearching(false);
         setSearchError(null);
+        setTranslationInfo(null);
     };
 
     const { addMeal } = useMeals();
@@ -138,9 +140,16 @@ const QuickAddFoodContent = ({ mealType, onClose, onScannerClick }: Omit<QuickAd
 
             if (result.success && result.data) {
                 setSearchResults(result.data);
+                // Capturer les informations de traduction si disponibles
+                if (result.translation) {
+                    setTranslationInfo(result.translation);
+                } else {
+                    setTranslationInfo(null);
+                }
             } else {
                 setSearchError("Search error occurred");
                 setSearchResults([]);
+                setTranslationInfo(null);
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -380,6 +389,19 @@ const QuickAddFoodContent = ({ mealType, onClose, onScannerClick }: Omit<QuickAd
                                         </div>
                                     </div>
                                 </Card>
+                            )}
+
+                            {/* Translation Info */}
+                            {translationInfo && (
+                                <div className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 text-sm p-3 rounded-lg mb-4 border border-blue-200 dark:border-blue-800">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs">🌐</span>
+                                        <span>
+                                            Recherche pour "{translationInfo.original}" 
+                                            → "{translationInfo.translated}"
+                                        </span>
+                                    </div>
+                                </div>
                             )}
 
                             {/* Error Display */}
