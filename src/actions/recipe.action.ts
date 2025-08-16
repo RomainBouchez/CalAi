@@ -27,11 +27,11 @@ export async function saveGeneratedRecipe(
                 sugar: generatedRecipe.nutritionalInfo.sugar || 0,
                 is_ai_generated: true,
                 ingredients: {
-                    create: generatedRecipe.ingredients.map(ingredient => ({
+                    create: generatedRecipe.ingredients.map((ingredient: any) => ({
                         name: ingredient.name,
                         quantity: ingredient.quantity,
-                        unit: ingredient.unit,
-                        notes: ingredient.notes,
+                        unit: ingredient.unit || null,
+                        notes: ingredient.notes || null,
                     }))
                 }
             },
@@ -56,7 +56,7 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
             orderBy: { created_at: 'desc' }
         });
 
-        return recipes.map(recipe => ({
+        return recipes.map((recipe: any) => ({
             id: recipe.id,
             userId: recipe.user_id,
             name: recipe.name,
@@ -66,17 +66,17 @@ export async function getUserRecipes(userId: string): Promise<Recipe[]> {
             cookTime: recipe.cook_time || undefined,
             servings: recipe.servings,
             calories: recipe.calories,
-            protein: Number(recipe.protein),
-            carbs: Number(recipe.carbs),
-            fats: Number(recipe.fats),
+            protein: recipe.protein ? Number(recipe.protein) : 0,
+            carbs: recipe.carbs ? Number(recipe.carbs) : 0,
+            fats: recipe.fats ? Number(recipe.fats) : 0,
             fiber: recipe.fiber ? Number(recipe.fiber) : undefined,
             sodium: recipe.sodium ? Number(recipe.sodium) : undefined,
             sugar: recipe.sugar ? Number(recipe.sugar) : undefined,
             imageUrl: recipe.image_url || undefined,
-            isAiGenerated: recipe.is_ai_generated,
+            isAiGenerated: recipe.is_ai_generated || false,
             createdAt: recipe.created_at || new Date(),
             updatedAt: recipe.updated_at || new Date(),
-            ingredients: recipe.ingredients.map(ingredient => ({
+            ingredients: (recipe.ingredients || []).map((ingredient: any) => ({
                 id: ingredient.id,
                 recipeId: ingredient.recipe_id,
                 inventoryId: ingredient.inventory_id || undefined,

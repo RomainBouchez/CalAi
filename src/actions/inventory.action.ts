@@ -91,7 +91,7 @@ export async function getUserInventory(userId: string): Promise<UserInventory[]>
             orderBy: { created_at: 'desc' }
         });
 
-        return inventory.map(item => ({
+        return inventory.map((item: any) => ({
             id: item.id,
             userId: item.user_id,
             name: item.name,
